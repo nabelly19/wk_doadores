@@ -1,0 +1,21 @@
+{
+  "api_average-age-by-blood-type": "average-age-by-blood-type",
+  "api_average-bmi-by-age-group": "average-bmi-by-age-group",
+  "api_count-by-state": "count-by-state",
+  "api_donors-per-recipient": "donors-per-recipient",
+  "api_load_data": "load-data",
+  "api_obesity-percentage": "obesity-percentage",
+  "averageAgeByBloodType": "Média de idade por tipo sanguíneo",
+  "bmiByAgeGroup": "IMC médio por faixa etária",
+  "connecting": "Conectando API...",
+  "donorsByState": "Doadores por estado",
+  "donorsPerRecipient": "Doadores por tipo sanguíneo",
+  "load_json": "Carregar JSON",
+  "no_data": "Não há dados para apresentar!",
+  "obesityPercentage": "Percentual de obsesos",
+  "report": "Relatório de doadores",
+  "retry": "Tentar novamente",
+  "select_json": "Selecionar arquivo JSON",
+  "title": "AppWKBanco",
+  "unavailable": "A API está indisponível!\nVerificar endereço no arquivo .env"
+}
