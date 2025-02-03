@@ -72,11 +72,22 @@ O backend foi desenvolvido utilizando **Spring Boot** e expõe uma API REST que 
 ### Frontend
 As telas foram desenvolvidas em **Flutter** e incluem:
 1. **Tela de splash** – Identificação do APP.
+![Tela de splash](screens/splash_sreen.png)
+
 2. **Tela de conexão API** – Verifica a disponibilidade da API.
+![Tela de conexão API](screens/connecting_screen.png)
+
 3. **Tela de indisponível** – Indica servidor offline.
+![Tela de indisponível](screens/indisponible_screen.png)
+
 4. **Tela de carga de dados** – Permite acesso a pastas do dispositivo.
+![Tela de carga de dados](screens/load_data_screen.png)
+
 5. **Tela de seleção do JSON** – Faz upload do arquivo JSON.
+![Tela de seleção do JSON](screens/data_screen.png)
+
 6. **Tela do relatório** – Exibe informações solicitadas pelo usuário.
+![Tela do relatório](screens/report_screen.png)
 
 ---
 
