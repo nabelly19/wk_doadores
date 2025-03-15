@@ -15,7 +15,7 @@ variables:
   webAppName: 'doadores'
 
   # Environment name
-  environmentName: 'teste'
+  environmentName: 'testecommit'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
