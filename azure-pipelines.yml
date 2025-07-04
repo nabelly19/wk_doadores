@@ -25,7 +25,7 @@ stages:
         cd $(BACKEND_DIR)
     - task: Maven@3
       inputs:
-        mavenPomFile: 'pom.xml'
+        mavenPomFile: 'back/pom.xml'
         goals: 'package'
         options: '-DskipTests'
       displayName: '🎯 Maven Package'
