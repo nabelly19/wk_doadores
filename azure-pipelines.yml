@@ -20,18 +20,26 @@ stages:
   - job: Build
     steps:
     - checkout: self
-    - script: |
-        echo "📁 Entrando em $(BACKEND_DIR)"
-        cd $(BACKEND_DIR)
+
+    # Maven Package usando o caminho correto do pom.xml dentro de back/
     - task: Maven@3
       inputs:
-        mavenPomFile: 'back/pom.xml'
+        mavenPomFile: '$(BACKEND_DIR)/pom.xml'
         goals: 'package'
         options: '-DskipTests'
       displayName: '🎯 Maven Package'
+
+    # Copiar os JARs gerados para a pasta BUILD_ARTIFACT (drop)
+    - script: |
+        echo "📦 Copiando artefatos para $(BUILD_ARTIFACT)"
+        mkdir -p $(BUILD_ARTIFACT)
+        cp $(BACKEND_DIR)/target/*.jar $(BUILD_ARTIFACT)/
+      displayName: '📂 Copiar artefatos'
+
+    # Publicar artefatos para os próximos estágios
     - task: PublishPipelineArtifact@1
       inputs:
-        targetPath: '$(Pipeline.Workspace)/drop'
+        targetPath: '$(BUILD_ARTIFACT)'
         artifact: backend-drop
 
 - stage: Test
@@ -42,12 +50,15 @@ stages:
   - job: UnitTests
     steps:
     - checkout: self
+
     - script: |
         echo "✅ Executando testes unitários"
-        cd $(BACKEND_DIR)
+      displayName: 'Preparar testes'
+
+    # Rodar testes Maven usando o pom.xml correto
     - task: Maven@3
       inputs:
-        mavenPomFile: 'pom.xml'
+        mavenPomFile: '$(BACKEND_DIR)/pom.xml'
         goals: 'test'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
@@ -67,6 +78,7 @@ stages:
           steps:
           - download: current
             artifact: backend-drop
+
           - script: |
               echo "🚀 [SIMULADO] Deploy Java no Azure"
               if [ "$(dryRun)" = "true" ]; then
