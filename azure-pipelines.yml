@@ -9,9 +9,9 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  webAppName: 'meu-backend-app'         # valor do Web App Azure
+  webAppName: 'meu-backend-app'         # Substitua pelo nome real da sua Web App no Azure
   environmentName: 'simulate-java'
-  dryRun: 'true'                       # flag que ativa o deploy simulado
+  dryRun: 'true'                        # Flag que ativa o deploy simulado
 
 stages:
 - stage: Build
@@ -40,9 +40,24 @@ stages:
     - publish: '$(Build.ArtifactStagingDirectory)'
       artifact: drop
 
+- stage: Test
+  displayName: Test
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: RunTests
+    displayName: 'Run Unit Tests'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        echo "🔍 Executando testes unitários com Maven..."
+        mvn test -f back/pom.xml
+      displayName: 'Executar Testes Unitários'
+
 - stage: Deploy
   displayName: Deploy (simulado)
-  dependsOn: Build
+  dependsOn: Test
   condition: succeeded()
   jobs:
   - deployment: SimulatedDeploy
@@ -66,3 +81,4 @@ stages:
               else
                 echo "⚠️ Modo simulado desativado — aqui seria usado AzureWebApp@1 ou AzureRmWebAppDeployment@4"
               fi
+            displayName: 'Simular Deploy'
