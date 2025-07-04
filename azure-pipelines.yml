@@ -1,0 +1,68 @@
+trigger:
+  branches:
+    include:
+      - develop
+      - release/*
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  webAppName: 'meu-backend-app'         # valor do Web App Azure
+  environmentName: 'simulate-java'
+  dryRun: 'true'                       # flag que ativa o deploy simulado
+
+stages:
+- stage: Build
+  displayName: Build
+  jobs:
+  - job: MavenBuild
+    displayName: 'Maven Package'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Maven@4
+      inputs:
+        mavenPomFile: 'back/pom.xml'
+        mavenOptions: '-Xmx3072m'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        jdkArchitectureOption: 'x64'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        goals: 'clean package'
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: 'back/target'
+        Contents: '*.jar'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    - publish: '$(Build.ArtifactStagingDirectory)'
+      artifact: drop
+
+- stage: Deploy
+  displayName: Deploy (simulado)
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: SimulatedDeploy
+    displayName: 'Deploy Simulado para Azure'
+    environment: $(environmentName)
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - script: |
+              echo "🚀 [SIMULADO] Deploy para Web App Linux: $(webAppName)"
+              if [ "$(dryRun)" = "true" ]; then
+                echo "✅ dryRun ativo: NÃO será executado deploy real."
+                echo "📦 Artefato disponível em: $(Pipeline.Workspace)/drop"
+                echo "➡️ Após deploy real, Swagger estaria disponível em: https://$(webAppName).azurewebsites.net/swagger"
+                echo "✅ Aplicação gravaria dados no MySQL."
+              else
+                echo "⚠️ Modo simulado desativado — aqui seria usado AzureWebApp@1 ou AzureRmWebAppDeployment@4"
+              fi
