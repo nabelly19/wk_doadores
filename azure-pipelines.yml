@@ -21,7 +21,6 @@ stages:
     steps:
     - checkout: self
 
-    # Maven Package usando o caminho correto do pom.xml dentro de back/
     - task: Maven@3
       inputs:
         mavenPomFile: '$(BACKEND_DIR)/pom.xml'
@@ -29,14 +28,12 @@ stages:
         options: '-DskipTests'
       displayName: '🎯 Maven Package'
 
-    # Copiar os JARs gerados para a pasta BUILD_ARTIFACT (drop)
     - script: |
         echo "📦 Copiando artefatos para $(BUILD_ARTIFACT)"
         mkdir -p $(BUILD_ARTIFACT)
         cp $(BACKEND_DIR)/target/*.jar $(BUILD_ARTIFACT)/
       displayName: '📂 Copiar artefatos'
 
-    # Publicar artefatos para os próximos estágios
     - task: PublishPipelineArtifact@1
       inputs:
         targetPath: '$(BUILD_ARTIFACT)'
@@ -55,7 +52,6 @@ stages:
         echo "✅ Executando testes unitários"
       displayName: 'Preparar testes'
 
-    # Rodar testes Maven usando o pom.xml correto
     - task: Maven@3
       inputs:
         mavenPomFile: '$(BACKEND_DIR)/pom.xml'
