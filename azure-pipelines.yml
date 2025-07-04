@@ -9,76 +9,71 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  webAppName: 'meu-backend-app'         # Substitua pelo nome real da sua Web App no Azure
-  environmentName: 'simulate-java'
-  dryRun: 'true'                        # Flag que ativa o deploy simulado
+  BACKEND_DIR: 'back'
+  BUILD_ARTIFACT: '$(Pipeline.Workspace)/drop'
+  dryRun: 'true'
 
 stages:
 - stage: Build
-  displayName: Build
+  displayName: '1. Build'
   jobs:
-  - job: MavenBuild
-    displayName: 'Maven Package'
-    pool:
-      vmImage: 'ubuntu-latest'
+  - job: Build
     steps:
-    - task: Maven@4
+    - checkout: self
+    - script: |
+        echo "📁 Entrando em $(BACKEND_DIR)"
+        cd $(BACKEND_DIR)
+    - task: Maven@3
       inputs:
-        mavenPomFile: 'back/pom.xml'
-        mavenOptions: '-Xmx3072m'
-        javaHomeOption: 'JDKVersion'
-        jdkVersionOption: '1.17'
-        jdkArchitectureOption: 'x64'
-        publishJUnitResults: true
-        testResultsFiles: '**/surefire-reports/TEST-*.xml'
-        goals: 'clean package'
-    - task: CopyFiles@2
+        mavenPomFile: 'pom.xml'
+        goals: 'package'
+        options: '-DskipTests'
+      displayName: '🎯 Maven Package'
+    - task: PublishPipelineArtifact@1
       inputs:
-        SourceFolder: 'back/target'
-        Contents: '*.jar'
-        TargetFolder: '$(Build.ArtifactStagingDirectory)'
-    - publish: '$(Build.ArtifactStagingDirectory)'
-      artifact: drop
+        targetPath: '$(Pipeline.Workspace)/drop'
+        artifact: backend-drop
 
 - stage: Test
-  displayName: Test
+  displayName: '2. Test'
   dependsOn: Build
   condition: succeeded()
   jobs:
-  - job: RunTests
-    displayName: 'Run Unit Tests'
-    pool:
-      vmImage: 'ubuntu-latest'
+  - job: UnitTests
     steps:
+    - checkout: self
     - script: |
-        echo "🔍 Executando testes unitários com Maven..."
-        mvn test -f back/pom.xml
-      displayName: 'Executar Testes Unitários'
+        echo "✅ Executando testes unitários"
+        cd $(BACKEND_DIR)
+    - task: Maven@3
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'test'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      displayName: '🧪 Maven Testes'
 
 - stage: Deploy
-  displayName: Deploy (simulado)
+  displayName: '3. Deploy (simulado)'
   dependsOn: Test
   condition: succeeded()
   jobs:
-  - deployment: SimulatedDeploy
-    displayName: 'Deploy Simulado para Azure'
-    environment: $(environmentName)
-    pool:
-      vmImage: 'ubuntu-latest'
+  - deployment: SimDeploy
+    displayName: 'Deploy Simulado'
+    environment: 'simulate-backend'
     strategy:
       runOnce:
         deploy:
           steps:
           - download: current
-            artifact: drop
+            artifact: backend-drop
           - script: |
-              echo "🚀 [SIMULADO] Deploy para Web App Linux: $(webAppName)"
+              echo "🚀 [SIMULADO] Deploy Java no Azure"
               if [ "$(dryRun)" = "true" ]; then
-                echo "✅ dryRun ativo: NÃO será executado deploy real."
-                echo "📦 Artefato disponível em: $(Pipeline.Workspace)/drop"
-                echo "➡️ Após deploy real, Swagger estaria disponível em: https://$(webAppName).azurewebsites.net/swagger"
+                echo "🛑 Modo dryRun ativo: não haverá deploy real."
+                echo "Artefatos prontos em: $(Pipeline.Workspace)/drop"
+                echo "✅ Swagger estaria disponível após deploy real."
                 echo "✅ Aplicação gravaria dados no MySQL."
               else
-                echo "⚠️ Modo simulado desativado — aqui seria usado AzureWebApp@1 ou AzureRmWebAppDeployment@4"
+                echo "⚠️ dryRun desativado: aqui ocorreria o deploy real."
               fi
-            displayName: 'Simular Deploy'
